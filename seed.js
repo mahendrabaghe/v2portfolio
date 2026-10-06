@@ -2,27 +2,34 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const bcrypt = require('bcrypt');
 const dns = require('dns');
+const path = require('path');
 
 // Configure public DNS servers to resolve MongoDB Atlas SRV records reliably on Windows
 dns.setServers(['8.8.8.8', '1.1.1.1']);
 
-dotenv.config();
+dotenv.config({ path: path.join(__dirname, '.env') });
+
+const requiredEnvironmentVariables = ['MONGODB_URI', 'ADMIN_EMAIL', 'ADMIN_PASSWORD'];
+const missingEnvironmentVariables = requiredEnvironmentVariables.filter(name => !process.env[name]);
+if (missingEnvironmentVariables.length) {
+  throw new Error(`Missing required environment variables: ${missingEnvironmentVariables.join(', ')}`);
+}
 
 const { User } = require('./models');
 const { Profile } = require('./models');
 const { Project } = require('./models');
 const { Experience } = require('./models');
 
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/portfolio', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-});
-
-const DEFAULT_ADMIN_EMAIL = 'admin@example.com';
-const DEFAULT_ADMIN_PASSWORD = 'password123';
+const DEFAULT_ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+const DEFAULT_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
 const seed = async () => {
   try {
+    await mongoose.connect(process.env.MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    });
+
     await User.deleteMany();
     await Profile.deleteMany();
     await Project.deleteMany();
@@ -50,7 +57,7 @@ const seed = async () => {
       { company: 'Google for Developers', position: 'AI/ML Intern', startDate: 'Jul 2024', endDate: 'Sep 2024' }
     ]);
 
-    console.log(`Data seeded! Admin login: ${DEFAULT_ADMIN_EMAIL} / ${DEFAULT_ADMIN_PASSWORD}`);
+    console.log('Data seeded successfully. Admin login credentials are configured.');
     process.exit();
   } catch (err) {
     console.error(err);

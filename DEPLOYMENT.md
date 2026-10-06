@@ -56,11 +56,15 @@ Verify that your local changes are committed and pushed to your GitHub repositor
    ```bash
    git status
    ```
-2. Verify that `.env` and `node_modules` are NOT staged (they are protected by `.gitignore`).
-3. Add and commit all changes:
+2. Stage only source and example configuration files; never stage `.env`:
    ```bash
-   git add .
-   git commit -m "Configure production deployment for Render and GitHub Pages"
+   git add .gitignore .env.example server/.env.example README.md DEPLOYMENT.md models.js server.js seed.js server/server.js server/seed.js
+   git diff --cached --name-only
+   git diff --cached --check
+   ```
+3. Verify that `.env` and `node_modules` are NOT staged, then commit and push:
+   ```bash
+   git commit -m "Move backend credentials to environment variables"
    git push origin main
    ```
 
@@ -106,8 +110,8 @@ Add the following environment variables:
 | `NODE_ENV` | `production` | Enables production optimizations |
 | `MONGODB_URI` | `mongodb+srv://<user>:<password>@cluster0.xxxx.mongodb.net/portfolio?retryWrites=true&w=majority` | Your MongoDB Atlas connection string |
 | `JWT_SECRET` | `generate_a_random_64_character_string_here` | Secret key used to sign and verify admin login tokens |
-| `ADMIN_EMAIL` | `admin@example.com` | Default admin email (auto-created on first run if DB is empty) |
-| `ADMIN_PASSWORD` | `ChooseAStrongPassword123!` | Default admin password |
+| `ADMIN_EMAIL` | Your admin email | Default admin email (auto-created on first run if DB is empty) |
+| `ADMIN_PASSWORD` | A unique, strong password | Default admin password |
 | `CLIENT_ORIGIN` | `https://mahendrabaghe.github.io` | Your GitHub Pages URL (without trailing slash or `/portfolio/`) |
 | `UPLOAD_DIR` | Absolute path of the mounted persistent disk | Optional; persistent storage for experience certificate PDFs |
 
@@ -128,7 +132,7 @@ Click **Create Web Service** at the bottom of the page.
    ```text
    Server running on port 10000
    MongoDB Connected to remote cluster
-   Admin account confirmed: admin@example.com
+   Admin account confirmed.
    ```
 3. Once the deployment says **Live**, copy your Web Service URL from the top of the dashboard.
    It will look like:
@@ -191,9 +195,7 @@ Within 1–2 minutes, GitHub Pages will automatically deploy the updated fronten
 
 ### 2. Test Admin Login
 1. Navigate to: `https://mahendrabaghe.github.io/portfolio/admin/index.html`
-2. Enter your admin credentials:
-   - **Email:** `admin@example.com` (or your custom `ADMIN_EMAIL`)
-   - **Password:** `password123` (or your custom `ADMIN_PASSWORD`)
+2. Enter the admin email and password configured for the backend.
 3. Click **Login**. You will be smoothly redirected to `dashboard.html`.
 
 ### 3. Test CRUD Operations in Admin Panel

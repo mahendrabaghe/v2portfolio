@@ -19,17 +19,13 @@ This project converts a static HTML portfolio into a dynamic, full-stack applica
 
 2. **Environment Variables**
    Create a `.env` file in the `server` directory using `.env.example` as a template.
-   Update `MONGODB_URI` with your MongoDB Atlas connection string.
+   Set `MONGODB_URI`, `JWT_SECRET`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` to your own values.
 
 3. **Seed Database**
    Run the seed script to create the default admin user and initial data:
    ```bash
    npm run seed
    ```
-   Admin Credentials:
-   - Email: `admin@example.com`
-   - Password: `password123`
-
 4. **Run Server**
    Start the backend server:
    ```bash

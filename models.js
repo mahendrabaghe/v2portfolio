@@ -121,6 +121,7 @@ UserSchema.methods.matchPassword = async function(enteredPassword) {
 
 
 module.exports = {
+  mongoose,
   Certification: mongoose.model('Certification', CertificationSchema),
   Education: mongoose.model('Education', EducationSchema),
   Experience: mongoose.model('Experience', ExperienceSchema),

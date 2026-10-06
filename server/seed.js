@@ -1,26 +1,29 @@
-const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const bcrypt = require('bcrypt');
-dotenv.config();
+const path = require('path');
+dotenv.config({ path: path.join(__dirname, '.env') });
 
-const { User } = require('./models');
-const { Profile } = require('./models');
-const { Project } = require('./models');
-const { Experience } = require('./models');
+const requiredEnvironmentVariables = ['MONGODB_URI', 'ADMIN_EMAIL', 'ADMIN_PASSWORD'];
+const missingEnvironmentVariables = requiredEnvironmentVariables.filter(name => !process.env[name]);
+if (missingEnvironmentVariables.length) {
+  throw new Error(`Missing required environment variables: ${missingEnvironmentVariables.join(', ')}`);
+}
 
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/portfolio', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-});
+const { mongoose, User, Profile, Project, Experience } = require('./models');
 
 const seed = async () => {
   try {
+    await mongoose.connect(process.env.MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    });
+
     await User.deleteMany();
     await Profile.deleteMany();
     await Project.deleteMany();
     await Experience.deleteMany();
 
-    const user = await User.create({ email: 'admin@example.com', password: 'password123' });
+    const user = await User.create({ email: process.env.ADMIN_EMAIL, password: process.env.ADMIN_PASSWORD });
 
     await Profile.create({
       name: 'Mahendra Baghel',
@@ -42,7 +45,7 @@ const seed = async () => {
       { company: 'Google for Developers', position: 'AI/ML Intern', startDate: 'Jul 2024', endDate: 'Sep 2024' }
     ]);
 
-    console.log('Data seeded! Admin login: admin@example.com / password123');
+    console.log('Data seeded successfully. Admin login credentials are configured.');
     process.exit();
   } catch (err) {
     console.error(err);

@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const mongoose = require('mongoose');
 const dns = require('dns');
 const path = require('path');
 
@@ -13,13 +12,22 @@ try {
 }
 
 // Load environment variables
-dotenv.config();
+dotenv.config({ path: path.join(__dirname, '.env') });
+
+const requiredEnvironmentVariables = ['ADMIN_EMAIL', 'ADMIN_PASSWORD', 'JWT_SECRET'];
+if (process.env.NODE_ENV === 'production') {
+  requiredEnvironmentVariables.push('MONGODB_URI');
+}
+const missingEnvironmentVariables = requiredEnvironmentVariables.filter(name => !process.env[name]);
+if (missingEnvironmentVariables.length) {
+  throw new Error(`Missing required environment variables: ${missingEnvironmentVariables.join(', ')}`);
+}
 
 // Import Models
-const { User } = require('./models');
+const { User, mongoose } = require('./models');
 
-const DEFAULT_ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@example.com';
-const DEFAULT_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'password123';
+const DEFAULT_ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+const DEFAULT_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
 const ensureDefaultAdmin = async () => {
   try {
@@ -29,9 +37,9 @@ const ensureDefaultAdmin = async () => {
         email: DEFAULT_ADMIN_EMAIL,
         password: DEFAULT_ADMIN_PASSWORD
       });
-      console.log(`Default admin created: ${DEFAULT_ADMIN_EMAIL}`);
+      console.log('Default admin created.');
     } else {
-      console.log(`Admin account confirmed: ${existingAdmin.email}`);
+      console.log('Admin account confirmed.');
     }
   } catch (err) {
     console.error('Error verifying/creating admin account:', err.message);
