@@ -147,6 +147,9 @@ app.use((req, res, next) => {
   next();
 });
 
+const uploadDirectory = path.resolve(process.env.UPLOAD_DIR || path.join(__dirname, 'server', 'uploads'));
+app.use('/uploads', express.static(uploadDirectory, { dotfiles: 'deny', index: false }));
+
 // Serve static frontend files if hosted together locally
 app.use(express.static(path.join(__dirname, 'public'), {
   maxAge: 0,

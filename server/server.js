@@ -3,6 +3,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const dns = require('dns');
+const path = require('path');
 
 // Configure public DNS servers to resolve MongoDB Atlas SRV records reliably
 try {
@@ -117,6 +118,9 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json());
+
+const uploadDirectory = path.resolve(process.env.UPLOAD_DIR || path.join(__dirname, 'uploads'));
+app.use('/uploads', express.static(uploadDirectory, { dotfiles: 'deny', index: false }));
 
 // Health Check Endpoint (Required by requirement 7)
 app.get('/api/health', (req, res) => {

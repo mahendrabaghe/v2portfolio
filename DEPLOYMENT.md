@@ -109,10 +109,13 @@ Add the following environment variables:
 | `ADMIN_EMAIL` | `admin@example.com` | Default admin email (auto-created on first run if DB is empty) |
 | `ADMIN_PASSWORD` | `ChooseAStrongPassword123!` | Default admin password |
 | `CLIENT_ORIGIN` | `https://mahendrabaghe.github.io` | Your GitHub Pages URL (without trailing slash or `/portfolio/`) |
+| `UPLOAD_DIR` | Absolute path of the mounted persistent disk | Optional; persistent storage for experience certificate PDFs |
 
 > [!NOTE]
 > Render automatically sets and injects the `PORT` variable. Do not hardcode a port.
 > Never share or commit your actual `MONGODB_URI` or `JWT_SECRET` to GitHub.
+
+Experience certificate PDFs are stored under `UPLOAD_DIR` (by default, `server/uploads`) and served from `/uploads/experience-certificates/`. MongoDB stores that public path in each experience record. To keep uploaded PDFs available after a Render restart or deploy, attach a persistent disk and set `UPLOAD_DIR` to its mount path. Without a persistent disk, uploaded files on Render's default filesystem may be removed when the service restarts or deploys.
 
 Click **Create Web Service** at the bottom of the page.
 

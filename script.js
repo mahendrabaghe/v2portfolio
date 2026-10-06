@@ -318,6 +318,15 @@ async function safeFetchJson(url) {
   }
 }
 
+function safeExternalUrl(value) {
+  try {
+    const url = new URL(value, API_BASE);
+    return ['http:', 'https:'].includes(url.protocol) ? url.href : '';
+  } catch {
+    return '';
+  }
+}
+
 async function fetchPortfolioData() {
   try {
     // ---- Profile / About ----
@@ -374,6 +383,7 @@ async function fetchPortfolioData() {
             <h4>${e.position}</h4>
             ${e.description ? `<p>${e.description}</p>` : ''}
             ${e.technologies && e.technologies.length ? `<p style="margin-top:8px;opacity:0.7;">${e.technologies.join(' • ')}</p>` : ''}
+            ${e.certificate && safeExternalUrl(e.certificate) ? `<a class="exp-cert-btn" href="${safeExternalUrl(e.certificate)}" target="_blank" rel="noopener noreferrer">View Certificate</a>` : ''}
           </div>`).join('');
       } else {
         expContainer.innerHTML = `<p style="color:#999; text-align:center;">No experiences added yet.</p>`;
@@ -384,16 +394,20 @@ async function fetchPortfolioData() {
     const projects = await safeFetchJson(`${API_BASE}/projects`);
     const projectGrid = document.getElementById('projectGrid');
     if (projectGrid && projects && projects.length > 0) {
-      projectGrid.innerHTML = projects.map(p => `
-        <div class="project-card" data-category="${p.category || 'other'}">
-          <h3>${p.title}</h3>
-          <p>${p.description || ''}</p>
-          <span>${p.technologies ? p.technologies.join(' • ') : ''}</span>
-          ${p.githubUrl || p.liveUrl ? `<div class="project-link-container">
-            ${p.githubUrl ? `<a href="${p.githubUrl}" target="_blank" class="project-link">GitHub</a>` : ''}
-            ${p.liveUrl ? `<a href="${p.liveUrl}" target="_blank" class="project-link">Live</a>` : ''}
-          </div>` : ''}
-        </div>`).join('');
+      projectGrid.innerHTML = projects.map(p => {
+        const githubUrl = safeExternalUrl(p.githubUrl);
+        const liveUrl = safeExternalUrl(p.liveUrl);
+        return `
+          <div class="project-card" data-category="${p.category || 'other'}">
+            <h3>${p.title}</h3>
+            <p>${p.description || ''}</p>
+            <span>${p.technologies ? p.technologies.join(' • ') : ''}</span>
+            ${githubUrl || liveUrl ? `<div class="project-link-container">
+              ${githubUrl ? `<a href="${githubUrl}" target="_blank" rel="noopener noreferrer" class="project-link">GitHub</a>` : ''}
+              ${liveUrl ? `<a href="${liveUrl}" target="_blank" rel="noopener noreferrer" class="project-link">Live Demo</a>` : ''}
+            </div>` : ''}
+          </div>`;
+      }).join('');
 
       // Re-bind filter buttons after dynamic render
       const filterButtons = document.querySelectorAll('.filter-btn');

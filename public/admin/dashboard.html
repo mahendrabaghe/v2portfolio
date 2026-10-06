@@ -221,6 +221,11 @@
         </div>
         <div class="form-group" style="margin-top:14px;"><label>Description</label><textarea id="expDesc" placeholder="Brief description..."></textarea></div>
         <div class="form-group" style="margin-top:14px;"><label>Technologies (comma separated)</label><input id="expTech" placeholder="Python, TensorFlow, Scikit-Learn"></div>
+        <div class="form-group" style="margin-top:14px;">
+          <label for="expCertificate">Certificate (PDF, max 10 MB)</label>
+          <input id="expCertificate" type="file" accept=".pdf,application/pdf">
+          <p id="expCertificateCurrent" hidden></p>
+        </div>
         <div class="btn-actions">
           <button class="btn btn-primary" id="expSubmitBtn" onclick="saveExperience()">➕ Add Experience</button>
           <button class="btn btn-secondary" id="expCancelBtn" style="display:none;" onclick="cancelEditExp()">Cancel</button>
@@ -248,8 +253,8 @@
               <option value="web">Web Development</option>
             </select>
           </div>
-          <div class="form-group"><label>GitHub URL</label><input id="prGithub" placeholder="https://github.com/..."></div>
-          <div class="form-group"><label>Live URL</label><input id="prLive" placeholder="https://..."></div>
+          <div class="form-group"><label for="prGithub">GitHub Repository URL</label><input id="prGithub" type="url" inputmode="url" placeholder="https://github.com/..."></div>
+          <div class="form-group"><label for="prLive">Live Demo URL</label><input id="prLive" type="url" inputmode="url" placeholder="https://..."></div>
         </div>
         <div class="form-group" style="margin-top:14px;"><label>Description</label><textarea id="prDesc" placeholder="What does this project do?"></textarea></div>
         <div class="form-group" style="margin-top:14px;"><label>Technologies (comma separated)</label><input id="prTech" placeholder="Python, TensorFlow, OpenCV"></div>
@@ -383,12 +388,13 @@
     // Authenticated API request helper with error & 401 interception
     async function authFetch(endpoint, options = {}) {
       const url = endpoint.startsWith('http') ? endpoint : `${API_URL}${endpoint}`;
+      const isFormData = options.body instanceof FormData;
       try {
         const res = await fetch(url, {
           ...options,
           cache: 'no-store',
           headers: {
-            'Content-Type': 'application/json',
+            ...(!isFormData ? { 'Content-Type': 'application/json' } : {}),
             'Authorization': `Bearer ${token}`,
             ...(options.headers || {})
           }
@@ -407,6 +413,32 @@
         showToast('⚠️ Unable to connect to server. Please try again.', true);
         return null;
       }
+    }
+
+    function safeCertificateUrl(value) {
+      try {
+        const url = new URL(value, API_URL);
+        return ['http:', 'https:'].includes(url.protocol) ? url.href : '';
+      } catch {
+        return '';
+      }
+    }
+
+    function setCurrentExperienceCertificate(value) {
+      const container = document.getElementById('expCertificateCurrent');
+      container.replaceChildren();
+      const href = value && safeCertificateUrl(value);
+      if (!href) {
+        container.hidden = true;
+        return;
+      }
+      const link = document.createElement('a');
+      link.href = href;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.textContent = 'View current certificate';
+      container.appendChild(link);
+      container.hidden = false;
     }
 
     function showSection(name) {
@@ -517,6 +549,7 @@
             <p>${escapeHtml(e.startDate || '')} ${e.endDate ? '→ ' + escapeHtml(e.endDate) : ''}</p>
           </div>
           <div class="item-actions">
+            ${e.certificate && safeCertificateUrl(e.certificate) ? `<a class="btn btn-success btn-sm" href="${safeCertificateUrl(e.certificate)}" target="_blank" rel="noopener noreferrer">View Certificate</a>` : ''}
             <button class="btn btn-secondary btn-sm" onclick="editExperience('${e._id}')">✏️ Edit</button>
             <button class="btn btn-danger btn-sm" onclick="deleteItem('experiences','${e._id}', loadExperiences)">🗑 Delete</button>
           </div>
@@ -533,6 +566,7 @@
       document.getElementById('expEnd').value = item.endDate || '';
       document.getElementById('expDesc').value = item.description || '';
       document.getElementById('expTech').value = (item.technologies || []).join(', ');
+      setCurrentExperienceCertificate(item.certificate);
 
       document.getElementById('expFormTitle').textContent = 'Edit Experience';
       document.getElementById('expSubmitBtn').textContent = '💾 Update Experience';
@@ -548,6 +582,8 @@
       document.getElementById('expEnd').value = '';
       document.getElementById('expDesc').value = '';
       document.getElementById('expTech').value = '';
+      document.getElementById('expCertificate').value = '';
+      setCurrentExperienceCertificate('');
       document.getElementById('expFormTitle').textContent = 'Add New Experience';
       document.getElementById('expSubmitBtn').textContent = '➕ Add Experience';
       document.getElementById('expCancelBtn').style.display = 'none';
@@ -571,14 +607,21 @@
 
       const method = editingExpId ? 'PUT' : 'POST';
       const endpoint = editingExpId ? `/experiences/${editingExpId}` : '/experiences';
+      const formData = new FormData();
+      Object.entries(payload).forEach(([key, value]) => {
+        formData.append(key, Array.isArray(value) ? JSON.stringify(value) : value);
+      });
+      const certificate = document.getElementById('expCertificate').files[0];
+      if (certificate) formData.append('certificate', certificate);
 
-      const res = await authFetch(endpoint, { method, body: JSON.stringify(payload) });
+      const res = await authFetch(endpoint, { method, body: formData });
       if (res && res.ok) {
         showToast(editingExpId ? '✅ Experience updated!' : '✅ Experience added!');
         cancelEditExp();
         loadExperiences();
       } else {
-        showToast('❌ Failed to save experience', true);
+        const error = res ? await res.json().catch(() => ({})) : {};
+        showToast(error.message || '❌ Failed to save experience', true);
       }
     }
 
@@ -641,6 +684,17 @@
 
       if (!payload.title) {
         showToast('Project title is required', true);
+        return;
+      }
+      if (![payload.githubUrl, payload.liveUrl].every(value => {
+        if (!value) return true;
+        try {
+          return ['http:', 'https:'].includes(new URL(value).protocol);
+        } catch {
+          return false;
+        }
+      })) {
+        showToast('Project links must be valid HTTP or HTTPS URLs', true);
         return;
       }
 
