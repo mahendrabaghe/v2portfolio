@@ -110,7 +110,7 @@ revealOnScroll();
 console.log("Portfolio Website Loaded Successfully 🚀");
 
 // ================= HERO TYPING ANIMATION =================
-const words = ["AI/ML Engineer", "Data Scientist", "NLP Developer", "RPA Bot Builder"];
+const words = ["ML Engineer", "Data Scientist", "Data Analyst", ];
 let wordIdx = 0;
 let charIdx = 0;
 let isDeleting = false;
