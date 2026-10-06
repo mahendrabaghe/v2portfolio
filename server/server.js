@@ -79,6 +79,7 @@ const app = express();
 
 // Allowed CORS origins (GitHub Pages production + local dev environments)
 const allowedOrigins = [
+  'https://v2portfolio-pdnu.onrender.com',
   'https://mahendrabaghe.github.io',
   'http://localhost:5500',
   'http://127.0.0.1:5500',

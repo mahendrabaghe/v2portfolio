@@ -2,7 +2,7 @@
 // PORTFOLIO CENTRALIZED API CONFIGURATION
 // ==============================================================================
 
-const RENDER_API_BASE_URL = "https://mahendra-portfolio-backend.onrender.com/api";
+const RENDER_API_BASE_URL = "https://v2portfolio-pdnu.onrender.com/api";
 
 // Auto-detect: use localhost when developing, Render when live
 const isLocal = Boolean(
